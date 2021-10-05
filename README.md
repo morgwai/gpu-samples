@@ -12,7 +12,7 @@ To test this theory I need to run this on an Nvidia or AMD GPU, but I don't have
 
 ## building and running
 
-First, make sure that you have an openCL driver for your GPU installed.
+First, make sure that you have an openCL driver for your GPU installed: [Nvidia](https://developer.nvidia.com/cuda-downloads), [AMD Linux](https://www.amd.com/en/support/kb/release-notes/rn-amdgpu-unified-linux-21-30) (AMD on windows should be available by default).
 
 ```bash
 mvn clean package
