@@ -161,30 +161,36 @@ public class PointerJumpingKernel extends Kernel implements AutoCloseable {
 
 	static Random random = new Random();
 
-	public static void runPointerJumpingExample(int size) {
-		double[] values = new double[size];
+	public static long runPointerJumpingExample(int size) {
+		double[] input = new double[size];
 		for (int i = 0; i < size; i++) {
-			values[i] = random.nextDouble() - 0.5;
+			input[i] = random.nextDouble() - 0.5;
 		}
 
 		var start = System.nanoTime();
-		double val = 0.0;
+		double result = 0.0;
 		for (int i = 0; i < size; i++) {
-			val += values[i];
+			result += input[i];
 		}
 		System.out.println(String.format(
-				"cpu: %1$15d,  result: %2$20.12f", System.nanoTime() - start, val));
+				"cpu: %1$15d,  result: %2$20.12f", System.nanoTime() - start, result));
 
 		start = System.nanoTime();
-		double result = PointerJumpingKernel.calculateSum(values);
+		result = PointerJumpingKernel.calculateSum(input);
+		var stop = System.nanoTime() - start;
 		System.out.println(String.format(
-				"gpu: %1$15d,  result: %2$20.12f\n", System.nanoTime() - start, result));
+				"gpu: %1$15d,  result: %2$20.12f\n", stop, result));
+		return stop;
 	}
 
 	public static void main(String[] args) {
 		PointerJumpingKernel.compile();
-		for (int i = 0; i < 10; i++)
-			runPointerJumpingExample(16*1024*1024);
-		System.out.println("bye bye!");
+		runPointerJumpingExample(16*1024*1024);
+		var totalTime = 0l;
+		var numberOfRuns = 20;
+		for (int i = 0; i < numberOfRuns; i++) {
+			totalTime += runPointerJumpingExample(16*1024*1024);
+		}
+		System.out.println("average: " + (totalTime/numberOfRuns));
 	}
 }
