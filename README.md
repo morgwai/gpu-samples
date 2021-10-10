@@ -9,10 +9,26 @@ First, make sure that you have an openCL driver for your GPU installed: [Nvidia]
 
 ```bash
 mvn clean package
+java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[32*1024] 50
+java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[1024*1024] 50
 java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[32*1024*1024] 50
 ```
 
-on my integrated intel GPU I get times similar to these:<pre>
+on my integrated intel GPU I get times similar to these:
+
+32k element array:<pre>
+BARRIER average:     444059
+   SIMD average:     314828
+ HYBRID average:     289607
+    CPU average:      90483</pre>
+
+1M:<pre>
+BARRIER average:    1787720
+   SIMD average:    1611933
+ HYBRID average:    1336646
+    CPU average:    1267648</pre>
+
+32M:<pre>
 BARRIER average:  101806901
    SIMD average:  102234318
  HYBRID average:   95539077
