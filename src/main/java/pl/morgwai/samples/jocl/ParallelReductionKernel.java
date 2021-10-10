@@ -258,17 +258,15 @@ public class ParallelReductionKernel implements AutoCloseable {
 	 * number of runs, default 20.
 	 */
 	public static void main(String[] args) {
-		var size = 16*1024*1024;
-		var numberOfRuns = 20;
+		var size = 128*1024*1024;
+		var numberOfRuns = 50;
 		if (args.length > 0) size = Integer.parseInt(args[0]);
 		if (args.length > 1) numberOfRuns = Integer.parseInt(args[1]);
 		ParallelReductionKernel.init();
 		var totalTimes = new long[SyncMode.values().length + 1];
 		for (int i = 0; i < numberOfRuns; i++) {
 			double[] input = new double[size];
-			for (int j = 0; j < size; j++) {
-				input[j] = random.nextDouble() - 0.5;
-			}
+			for (int j = 0; j < size; j++) input[j] = random.nextDouble() - 0.5;
 
 			for (var syncMode: SyncMode.values()) measureExecutionTime(input, syncMode, totalTimes);
 
