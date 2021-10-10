@@ -258,11 +258,11 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 	/**
 	 * Runs all 3 {@link SyncMode}s and CPU reduction on random data and outputs evaluation times.
-	 * @param args {@code args[0]}: optional data size, default 16M. {@code args[1]}: optional
+	 * @param args {@code args[0]}: optional data size, default 2M. {@code args[1]}: optional
 	 * number of runs, default 20.
 	 */
 	public static void main(String[] args) {
-		var size = 16*1024*1024;
+		var size = 2*1024*1024;
 		var numberOfRuns = 20;
 		if (args.length > 0) size = Integer.parseInt(args[0]);
 		if (args.length > 1) numberOfRuns = Integer.parseInt(args[1]);
