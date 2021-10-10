@@ -1,22 +1,19 @@
-# Pointer-jumping on a GPU using Aparapi
+# GPU samples
 
-Classic [pointer jumping](https://en.wikipedia.org/wiki/Pointer_jumping) algorithm summarizing values from an array adapted to run on a GPU instead of a PRAM using [Aparapi](https://aparapi.com/).
+Parallel reduction and [pointer jumping](https://en.wikipedia.org/wiki/Pointer_jumping) algorithms summarizing values from an array adapted to run on a GPU using [Aparapi](https://aparapi.com/) and [JOCL](http://www.jocl.org/) (frontends to [openCL](https://www.khronos.org/opencl/)).
 
-On my integrated Intel GPU (maxWorkWorkGroupSize=256, maxComputeUnits=48), this works 4 times slower than sequential adding on the CPU.
 
-This is probably because the algorithm is memory bound and spends most time on fetching values from the memory. See [this SO answer](https://stackoverflow.com/questions/22866901/using-java-with-nvidia-gpus-cuda#22868938) for more info.
+## building and running comparison of various sync methods in openCL parallel reduction
 
-The other reason may be that [intel has only 16 barrier registers (and only 64kB local memory _shared_ among running work-groups)](https://software.intel.com/content/www/us/en/develop/documentation/iocl-opg/top/optimizing-opencl-usage-with-intel-processor-graphics/work-group-size-recommendations-summary.html), so only up to 16 work-groups can run in parallel.
-
-To test this theory I need to run this on an Nvidia or AMD GPU, but I don't have any at hand. If someone who has, could run this code and send me back the results, I'd be very grateful :)
-
-## building and running
-
-First, make sure that you have an openCL driver for your GPU installed: [Nvidia](https://developer.nvidia.com/cuda-downloads), [AMD Linux](https://www.amd.com/en/support/kb/release-notes/rn-amdgpu-unified-linux-21-30) (AMD on windows should be available by default).
+First, make sure that you have an openCL driver for your GPU installed: [Nvidia](https://developer.nvidia.com/cuda-downloads), [AMD Linux](https://www.amd.com/en/support/kb/release-notes/rn-amdgpu-unified-linux-21-30) (AMD on windows should be available by default, hopefully).
 
 ```bash
 mvn clean package
-java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[32*1024*1024] 50
 ```
 
-Thanks!
+on my integrated intel GPU I get times similar to these:<pre>
+BARRIER average:  101806901
+   SIMD average:  102234318
+ HYBRID average:   95539077
+    CPU average:   41322452</pre>

@@ -4,10 +4,10 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>pl.morgwai.samples</groupId>
-	<artifactId>pointer-jumping-gpu</artifactId>
+	<artifactId>gpu-samples</artifactId>
 	<version>1.0-SNAPSHOT</version>
 
-	<name>Java Sample</name>
+	<name>GPU samples with jocl and aparapi</name>
 
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
@@ -42,7 +42,7 @@
 						<configuration>
 							<archive>
 								<manifest>
-									<mainClass>pl.morgwai.samples.aparapi.PointerJumpingKernel</mainClass>
+									<mainClass>pl.morgwai.samples.jocl.ParallelReductionKernel</mainClass>
 								</manifest>
 							</archive>
 							<descriptorRefs>
