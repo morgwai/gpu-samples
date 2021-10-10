@@ -1,3 +1,4 @@
+// Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #pragma OPENCL EXTENSION cl_khr_subgroups : enable
 
