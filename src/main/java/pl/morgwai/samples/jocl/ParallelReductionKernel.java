@@ -143,18 +143,21 @@ public class ParallelReductionKernel implements AutoCloseable {
 		var numberOfGroups = inputLength / groupSize;
 		if (groupSize * numberOfGroups < inputLength) numberOfGroups++;  // group for uneven tail
 		if (numberOfGroups == 1) groupSize = closest2Power(groupSize);  // rounding uneven input
-		try {
-			var results = reduceOnGpu(input, inputLength, numberOfGroups, groupSize);
-			if (numberOfGroups > 1) return reduceRecursively(results, numberOfGroups);
 
-			var resultBuffer = new double[1];
-			clEnqueueReadBuffer(queue, results, CL_TRUE, 0, Sizeof.cl_double,
-					Pointer.to(resultBuffer), 0, null, null);
-			clReleaseMemObject(results);
-			return resultBuffer[0];
+		cl_mem results;
+		try {
+			results = reduceOnGpu(input, inputLength, numberOfGroups, groupSize);
 		} finally {
 			clReleaseMemObject(input);
 		}
+
+		if (numberOfGroups > 1) return reduceRecursively(results, numberOfGroups);
+
+		var resultBuffer = new double[1];
+		clEnqueueReadBuffer(queue, results, CL_TRUE, 0, Sizeof.cl_double,
+				Pointer.to(resultBuffer), 0, null, null);
+		clReleaseMemObject(results);
+		return resultBuffer[0];
 	}
 
 	static int closest2Power(int x) {
