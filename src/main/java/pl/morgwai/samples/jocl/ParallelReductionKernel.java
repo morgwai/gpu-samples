@@ -3,6 +3,7 @@ package pl.morgwai.samples.jocl;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.logging.Logger;
 
 import org.jocl.CL;
 import org.jocl.Pointer;
@@ -258,8 +259,8 @@ public class ParallelReductionKernel implements AutoCloseable {
 	 * number of runs, default 20.
 	 */
 	public static void main(String[] args) {
-		var size = 128*1024*1024;
-		var numberOfRuns = 50;
+		var size = 16*1024*1024;
+		var numberOfRuns = 20;
 		if (args.length > 0) size = Integer.parseInt(args[0]);
 		if (args.length > 1) numberOfRuns = Integer.parseInt(args[1]);
 		ParallelReductionKernel.init();
@@ -275,10 +276,10 @@ public class ParallelReductionKernel implements AutoCloseable {
 			for (int j = 0; j < size; j++) result += input[j];
 			var elapsed = System.nanoTime() - start;
 			totalTimes[SyncMode.values().length] += elapsed;
-			System.out.println(String.format(
-					"%1$7s: %2$10d,  result: %3$20.12f", "CPU", elapsed, result));
-			System.out.println();
+			log.fine(String.format("%1$7s: %2$10d,  result: %3$20.12f", "CPU", elapsed, result));
+			System.out.print('.');
 		}
+		System.out.println();
 		for (var syncMode: SyncMode.values()) {
 			System.out.println(String.format("%1$7s average: %2$10d",
 					syncMode , totalTimes[syncMode.ordinal()] / numberOfRuns));
@@ -292,9 +293,9 @@ public class ParallelReductionKernel implements AutoCloseable {
 		var result = ParallelReductionKernel.calculateSum(input, syncMode);
 		var elapsed = System.nanoTime() - start;
 		totalTimes[syncMode.ordinal()] += elapsed;
-		System.out.println(String.format(
-				"%1$7s: %2$10d,  result: %3$20.12f", syncMode, elapsed, result));
+		log.fine(String.format("%1$7s: %2$10d,  result: %3$20.12f", syncMode, elapsed, result));
 	}
 
-	static Random random = new Random();
+	static final Random random = new Random();
+	static final Logger log = Logger.getLogger(ParallelReductionKernel.class.getName());
 }
