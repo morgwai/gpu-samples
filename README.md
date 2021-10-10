@@ -9,9 +9,11 @@ First, make sure that you have an openCL driver for your GPU installed: [Nvidia]
 
 ```bash
 mvn clean package
-java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[32*1024] 50
-java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[1024*1024] 50
-java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[32*1024*1024] 50
+java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[128*1024] 50
+java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[512*1024] 50
+java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[2*1024*1024] 50
+java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[4*1024*1024] 50
+java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[128*1024*1024] 50
 ```
 
 on my integrated intel GPU I get times similar to these:
