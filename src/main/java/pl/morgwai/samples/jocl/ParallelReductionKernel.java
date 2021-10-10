@@ -137,7 +137,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 		var syncMode = this.syncMode;
 		if (syncMode == SyncMode.SIMD && inputLength > simdWidth && inputLength % simdWidth != 0) {
 			syncMode = SyncMode.HYBRID;
-			System.out.println("warning: inputLength % simdWidth != 0, falling back to HYBRID");
+			System.err.println("warning: inputLength % simdWidth != 0, falling back to HYBRID");
 		}
 		var groupSize = Math.min(inputLength, syncMode == SyncMode.SIMD ? simdWidth : maxGroupSize);
 		var numberOfGroups = inputLength / groupSize;
