@@ -30,7 +30,7 @@ BARRIER average:     768170
  HYBRID average:     433704
     CPU average:     175977</pre>
 
-256::<pre>
+256k:<pre>
 BARRIER average:    1018578
    SIMD average:     793267
  HYBRID average:     738423
