@@ -17,19 +17,19 @@ java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar $[32
 on my integrated intel GPU I get times similar to these:
 
 32k element array:<pre>
-BARRIER average:     444059
-   SIMD average:     314828
- HYBRID average:     289607
-    CPU average:      90483</pre>
+BARRIER average:     403076
+   SIMD average:     295953
+ HYBRID average:     269073
+    CPU average:      62924</pre>
 
 1M:<pre>
-BARRIER average:    1787720
-   SIMD average:    1611933
- HYBRID average:    1336646
-    CPU average:    1267648</pre>
+BARRIER average:    1759843
+   SIMD average:    1580668
+ HYBRID average:    1366559
+    CPU average:    1288948</pre>
 
 32M:<pre>
-BARRIER average:  101806901
-   SIMD average:  102234318
- HYBRID average:   95539077
-    CPU average:   41322452</pre>
+BARRIER average:  102840013
+   SIMD average:  103991061
+ HYBRID average:   95481061
+    CPU average:   41226782</pre>
