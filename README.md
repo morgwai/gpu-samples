@@ -22,14 +22,56 @@ BARRIER average:     403076
  HYBRID average:     269073
     CPU average:      62924</pre>
 
+128k:<pre>
+BARRIER average:     768170
+   SIMD average:     483343
+ HYBRID average:     433704
+    CPU average:     175977</pre>
+
+256::<pre>
+BARRIER average:    1018578
+   SIMD average:     793267
+ HYBRID average:     738423
+    CPU average:     367999</pre>
+
+512k:<pre>
+BARRIER average:    1191166
+   SIMD average:    1019678
+ HYBRID average:     828609
+    CPU average:     780270</pre>
+
 1M:<pre>
 BARRIER average:    1759843
    SIMD average:    1580668
  HYBRID average:    1366559
     CPU average:    1288948</pre>
 
+2M:<pre>
+BARRIER average:    3406786
+   SIMD average:    3070155
+ HYBRID average:    2398054
+    CPU average:    2674748</pre>
+
+4M-4k:<pre>
+BARRIER average:    6573353 (1 recursive step on HYBRID)
+   SIMD average:    6758205
+ HYBRID average:    5653419
+    CPU average:    5582159</pre>
+
+4M:<pre>
+BARRIER average:   13797841
+   SIMD average:   13367851
+ HYBRID average:   12600975
+    CPU average:    5427631</pre>
+
 32M:<pre>
 BARRIER average:  102840013
    SIMD average:  103991061
  HYBRID average:   95481061
     CPU average:   41226782</pre>
+
+255M:<pre>
+BARRIER average:  878887550 (1 recursive step on HYBRID)
+   SIMD average:  819652415
+ HYBRID average:  730983353
+    CPU average:  323803437</pre>
