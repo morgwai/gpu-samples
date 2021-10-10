@@ -4,17 +4,17 @@
 
 
 
-void accumulateVolatile(uint sourceIndex, uint targetIndex,  __local volatile double* localSlice) {
+void accumulateVolatile(uint sourceIndex, uint targetIndex, __local volatile double* localSlice) {
 	localSlice[targetIndex] += localSlice[sourceIndex];
 }
 
 
 
 __kernel void reduceHybrid(
-	__global const double *input, 
-	uint inputLength, 
-	__local double *localSlice, 
-	__global double *results 
+	__global const double *input,
+	uint inputLength,
+	__local double *localSlice,
+	__global double *results
 ) {
 	uint i = get_local_id(0);
 	uint globalIndex = get_global_id(0);
@@ -47,10 +47,10 @@ __kernel void reduceHybrid(
 
 
 __kernel void reduceBarrier(
-	__global const double *input, 
-	uint inputLength, 
-	__local double *localSlice, 
-	__global double *results 
+	__global const double *input,
+	uint inputLength,
+	__local double *localSlice,
+	__global double *results
 ) {
 	uint i = get_local_id(0);
 	uint globalIndex = get_global_id(0);
@@ -76,10 +76,10 @@ __kernel void reduceBarrier(
 
 // group size cannot be bigger than SIMD width
 __kernel void reduceSimd(
-	__global const double *input, 
-	uint inputLength, 
-	__local volatile double *localSlice, 
-	__global double *results 
+	__global const double *input,
+	uint inputLength,
+	__local volatile double *localSlice,
+	__global double *results
 ) {
 	uint i = get_local_id(0);
 	uint globalIndex = get_global_id(0);
