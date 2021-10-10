@@ -207,7 +207,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 
 	/**
-	 * voodoo initiation. each time this function is called a puppy dies, so mind yourself ;-]
+	 * Voodoo initiation. Each time this function is called a puppy dies, so mind yourself ;-]
 	 */
 	static synchronized void init() {
 		if (program != null) return;
