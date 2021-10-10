@@ -125,6 +125,8 @@ public class ParallelReductionKernel implements AutoCloseable {
 	 * {@code input} in separate work-groups, after that recursively reduces array of results from
 	 * all work-groups. Recursion stops when everything is accumulated into a single value.
 	 * <p>
+	 * Takes ownership of {@code input}.</p>
+	 * <p>
 	 * work-group size approach:<br/>
 	 * if {@code input.length <= maxGroupSize} then {@code groupSize = }({@code input.length}
 	 * rounded up to the nearest power of 2)<br/>
@@ -134,18 +136,23 @@ public class ParallelReductionKernel implements AutoCloseable {
 	 * @return value reduced from the whole input.
 	 */
 	double reduceRecursively(cl_mem input, int inputLength) {
-		var syncMode = this.syncMode;
-		if (syncMode == SyncMode.SIMD && inputLength > simdWidth && inputLength % simdWidth != 0) {
-			syncMode = SyncMode.HYBRID;
-			System.err.println("warning: inputLength % simdWidth != 0, falling back to HYBRID");
-		}
-		var groupSize = Math.min(inputLength, syncMode == SyncMode.SIMD ? simdWidth : maxGroupSize);
-		var numberOfGroups = inputLength / groupSize;
-		if (groupSize * numberOfGroups < inputLength) numberOfGroups++;  // group for uneven tail
-		if (numberOfGroups == 1) groupSize = closest2Power(groupSize);  // rounding uneven input
-
+		int numberOfGroups;
 		cl_mem results;
 		try {
+			var syncMode = this.syncMode;
+			if (
+				syncMode == SyncMode.SIMD
+				&& inputLength > simdWidth
+				&& inputLength % simdWidth != 0
+			) {
+				syncMode = SyncMode.HYBRID;
+				System.err.println("warning: inputLength % simdWidth != 0, falling back to HYBRID");
+			}
+			var groupSize = Math.min(
+					inputLength, syncMode == SyncMode.SIMD ? simdWidth : maxGroupSize);
+			numberOfGroups = inputLength / groupSize;
+			if (groupSize * numberOfGroups < inputLength) numberOfGroups++; // group for uneven tail
+			if (numberOfGroups == 1) groupSize = closest2Power(groupSize);  // rounding uneven input
 			results = reduceOnGpu(input, inputLength, numberOfGroups, groupSize);
 		} finally {
 			clReleaseMemObject(input);
@@ -153,11 +160,14 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 		if (numberOfGroups > 1) return reduceRecursively(results, numberOfGroups);
 
-		var resultBuffer = new double[1];
-		clEnqueueReadBuffer(queue, results, CL_TRUE, 0, Sizeof.cl_double,
-				Pointer.to(resultBuffer), 0, null, null);
-		clReleaseMemObject(results);
-		return resultBuffer[0];
+		try {
+			var resultBuffer = new double[1];
+			clEnqueueReadBuffer(queue, results, CL_TRUE, 0, Sizeof.cl_double,
+					Pointer.to(resultBuffer), 0, null, null);
+			return resultBuffer[0];
+		} finally {
+			clReleaseMemObject(results);
+		}
 	}
 
 	static int closest2Power(int x) {
@@ -168,7 +178,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 	/**
 	 * Calls parallel reduction kernel 1 time.
-	 * @return buffer with results from all work-groups.
+	 * @return buffer with results from all work-groups. Caller takes ownership.
 	 */
 	cl_mem reduceOnGpu(cl_mem input, int inputLength, int numberOfGroups, int groupSize) {
 
@@ -178,14 +188,20 @@ public class ParallelReductionKernel implements AutoCloseable {
 		var results = clCreateBuffer(ctx, CL_MEM_READ_WRITE | hostAccessMode,
 				numberOfGroups * Sizeof.cl_double, null, null);
 
-		// set args and call kernel
-		clSetKernelArg(kernel, 0/*input*/, Sizeof.cl_mem, Pointer.to(input));
-		clSetKernelArg(kernel, 1/*inputLength*/, Sizeof.cl_int, Pointer.to(new int[]{inputLength}));
-		clSetKernelArg(kernel, 2/*localSlice*/, Sizeof.cl_double * groupSize, null);
-		clSetKernelArg(kernel, 3/*results*/, Sizeof.cl_mem, Pointer.to(results));
-		clEnqueueNDRangeKernel(queue, kernel, 1, null, new long[]{numberOfGroups*groupSize},
-				new long[]{groupSize}, 0, null,null);
-		return results;
+		try {
+			// set args and call kernel
+			clSetKernelArg(kernel, 0/*input*/, Sizeof.cl_mem, Pointer.to(input));
+			clSetKernelArg(kernel, 1/*inputLength*/, Sizeof.cl_int,
+					Pointer.to(new int[] {inputLength}));
+			clSetKernelArg(kernel, 2/*localSlice*/, Sizeof.cl_double * groupSize, null);
+			clSetKernelArg(kernel, 3/*results*/, Sizeof.cl_mem, Pointer.to(results));
+			clEnqueueNDRangeKernel(queue, kernel, 1, null, new long[] {numberOfGroups*groupSize},
+					new long[] {groupSize}, 0, null,null);
+			return results;
+		} catch (Throwable t) {
+			clReleaseMemObject(results);
+			throw t;
+		}
 	}
 
 
