@@ -3,6 +3,7 @@ package pl.morgwai.samples.jocl;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jocl.CL;
@@ -272,17 +273,32 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 
 
+	public static void main(String[] args) {
+		var numberOfRuns = 50;
+		ParallelReductionKernel.init();
+		measureTimes(32*1024, numberOfRuns);
+		measureTimes(256*1024, numberOfRuns);
+		measureTimes(512*1024, numberOfRuns);
+		measureTimes(1024*1024, numberOfRuns);
+		measureTimes(2*1024*1024, numberOfRuns);
+		measureTimes(3*1024*1024, numberOfRuns);
+		measureTimes(4*1024*1024, numberOfRuns);
+		measureTimes(8*1024*1024, numberOfRuns);
+		measureTimes(32*1024*1024, numberOfRuns);
+		measureTimes(128*1024*1024, numberOfRuns);
+	}
+
 	/**
 	 * Runs all 3 {@link SyncMode}s and CPU reduction on random data and outputs evaluation times.
-	 * @param args {@code args[0]}: optional data size, default 2M. {@code args[1]}: optional
-	 * number of runs, default 20.
 	 */
-	public static void main(String[] args) {
-		var size = 2*1024*1024;
-		var numberOfRuns = 20;
-		if (args.length > 0) size = Integer.parseInt(args[0]);
-		if (args.length > 1) numberOfRuns = Integer.parseInt(args[1]);
-		ParallelReductionKernel.init();
+	public static void measureTimes(int size, int numberOfRuns) {
+		if (size < 1000_000) {
+			System.out.println("" + (size/1024) + "k elements, running " + numberOfRuns
+					+ " times:");
+		} else {
+			System.out.println("" + (size/1024/1024) + "M elements, running " + numberOfRuns
+					+ " times:");
+		}
 		var totalTimes = new long[SyncMode.values().length + 1];
 		for (int i = 0; i < numberOfRuns; i++) {
 			double[] input = new double[size];
@@ -295,7 +311,10 @@ public class ParallelReductionKernel implements AutoCloseable {
 			for (int j = 0; j < size; j++) result += input[j];
 			var elapsed = System.nanoTime() - start;
 			totalTimes[SyncMode.values().length] += elapsed;
-			log.fine(String.format("%1$7s: %2$10d,  result: %3$20.12f", "CPU", elapsed, result));
+			if (log.isLoggable(Level.FINE)) {
+				log.fine(String.format(
+						"%1$7s: %2$10d,  result: %3$20.12f", "CPU", elapsed, result));
+			}
 			System.out.print('.');
 		}
 		System.out.println();
@@ -305,6 +324,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 		}
 		System.out.println(String.format("%1$7s average: %2$10d",
 				"CPU" , totalTimes[SyncMode.values().length] / numberOfRuns));
+		System.out.println();
 	}
 
 	static void measureExecutionTime(double[] input, SyncMode syncMode, long[] totalTimes) {
@@ -312,7 +332,9 @@ public class ParallelReductionKernel implements AutoCloseable {
 		var result = ParallelReductionKernel.calculateSum(input, syncMode);
 		var elapsed = System.nanoTime() - start;
 		totalTimes[syncMode.ordinal()] += elapsed;
-		log.fine(String.format("%1$7s: %2$10d,  result: %3$20.12f", syncMode, elapsed, result));
+		if (log.isLoggable(Level.FINE)) {
+			log.fine(String.format("%1$7s: %2$10d,  result: %3$20.12f", syncMode, elapsed, result));
+		}
 	}
 
 	static final Random random = new Random();
