@@ -27,7 +27,10 @@ __kernel void reduceHybrid(
 	uint simdWidth = get_max_sub_group_size();
 	uint activeThreadCount = get_local_size(0) >> 1;
 	while (activeThreadCount > simdWidth) {
-		if (i < activeThreadCount && (i + activeThreadCount) < inputLength) {
+		if (
+			i < activeThreadCount
+			&& (globalIndex + activeThreadCount) < inputLength
+		) {
 			localSlice[i] += localSlice[i + activeThreadCount];
 		}
 		barrier(CLK_LOCAL_MEM_FENCE);
@@ -37,7 +40,9 @@ __kernel void reduceHybrid(
 	// main loop with SIMD + volatile synchronization
 	if (i >= simdWidth) return;
 	while (activeThreadCount > 0) {
-		accumulateVolatile(i + activeThreadCount, i, localSlice);
+		if (globalIndex + activeThreadCount < inputLength) {
+			accumulateVolatile(i + activeThreadCount, i, localSlice);
+		}
 		activeThreadCount >>= 1;
 	}
 
@@ -62,7 +67,10 @@ __kernel void reduceBarrier(
 	// main loop with barrier synchronization
 	uint activeThreadCount = get_local_size(0) >> 1;
 	while (activeThreadCount > 0) {
-		if (i < activeThreadCount && (i + activeThreadCount) < inputLength) {
+		if (
+			i < activeThreadCount
+			&& (globalIndex + activeThreadCount) < inputLength
+		) {
 			localSlice[i] += localSlice[i + activeThreadCount];
 		}
 		barrier(CLK_LOCAL_MEM_FENCE);
@@ -85,12 +93,14 @@ __kernel void reduceSimd(
 	uint globalIndex = get_global_id(0);
 
 	// copy input to local memory
-	localSlice[i] = input[globalIndex];
+	if (globalIndex < inputLength) localSlice[i] = input[globalIndex];
 
 	// main loop with SIMD + volatile synchronization
 	uint activeThreadCount = get_local_size(0) >> 1;
 	while (activeThreadCount > 0) {
-		localSlice[i] += localSlice[i + activeThreadCount];
+		if (globalIndex + activeThreadCount < inputLength) {
+			localSlice[i] += localSlice[i + activeThreadCount];
+		}
 		activeThreadCount >>= 1;
 	}
 

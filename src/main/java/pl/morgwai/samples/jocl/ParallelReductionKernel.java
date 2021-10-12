@@ -3,8 +3,6 @@ package pl.morgwai.samples.jocl;
 
 import java.io.IOException;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.jocl.CL;
 import org.jocl.Pointer;
@@ -43,8 +41,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 		/**
 		 * Use SIMD synchronous execution combined with annotating memory regions being written as
-		 * volatile. Limits max work-group size to SIMD width. input size must be multiple of
-		 * {@link #getSimdWidth() SIMD width}, otherwise {@link #HYBRID} will be used.
+		 * volatile. Limits max work-group size to SIMD width.
 		 */
 		SIMD,
 
@@ -140,15 +137,6 @@ public class ParallelReductionKernel implements AutoCloseable {
 		int numberOfGroups;
 		cl_mem results;
 		try {
-			var syncMode = this.syncMode;
-			if (
-				syncMode == SyncMode.SIMD
-				&& inputLength > simdWidth
-				&& inputLength % simdWidth != 0
-			) {
-				syncMode = SyncMode.HYBRID;
-				System.err.println("warning: inputLength % simdWidth != 0, falling back to HYBRID");
-			}
 			var groupSize = Math.min(
 					inputLength, syncMode == SyncMode.SIMD ? simdWidth : maxGroupSize);
 			numberOfGroups = inputLength / groupSize;
@@ -282,61 +270,71 @@ public class ParallelReductionKernel implements AutoCloseable {
 		measureTimes(1024*1024, numberOfRuns);
 		measureTimes(2*1024*1024, numberOfRuns);
 		measureTimes(3*1024*1024, numberOfRuns);
+		measureTimes(4*1024*1024 - 4096, numberOfRuns);
 		measureTimes(4*1024*1024, numberOfRuns);
 		measureTimes(8*1024*1024, numberOfRuns);
 		measureTimes(32*1024*1024, numberOfRuns);
-		measureTimes(128*1024*1024, numberOfRuns);
+		measureTimes(255*1024*1024, numberOfRuns);
 	}
 
 	/**
 	 * Runs all 3 {@link SyncMode}s and CPU reduction on random data and outputs evaluation times.
 	 */
 	public static void measureTimes(int size, int numberOfRuns) {
-		if (size < 1000_000) {
+		if (size % (1024*1024) != 0) {
 			System.out.println("" + (size/1024) + "k elements, running " + numberOfRuns
 					+ " times:");
 		} else {
 			System.out.println("" + (size/1024/1024) + "M elements, running " + numberOfRuns
 					+ " times:");
 		}
-		var totalTimes = new long[SyncMode.values().length + 1];
+		var totalExecutionTimes = new long[SyncMode.values().length + 1];
 		for (int i = 0; i < numberOfRuns; i++) {
+
+			//generate input
 			double[] input = new double[size];
 			for (int j = 0; j < size; j++) input[j] = random.nextDouble() - 0.5;
 
-			for (var syncMode: SyncMode.values()) measureExecutionTime(input, syncMode, totalTimes);
+			// run all sync modes
+			var results = new double[SyncMode.values().length];
+			for (var syncMode: SyncMode.values()) {
+				measureExecutionTime(input, syncMode, results, totalExecutionTimes);
+			}
 
+			// run on cpu
 			var start = System.nanoTime();
 			var result = 0.0;
 			for (int j = 0; j < size; j++) result += input[j];
-			var elapsed = System.nanoTime() - start;
-			totalTimes[SyncMode.values().length] += elapsed;
-			if (log.isLoggable(Level.FINE)) {
-				log.fine(String.format(
-						"%1$7s: %2$10d,  result: %3$20.12f", "CPU", elapsed, result));
+			totalExecutionTimes[SyncMode.values().length] += (System.nanoTime() - start);
+
+			// verify results
+			for (var syncMode: SyncMode.values()) {
+				if (Math.abs(results[syncMode.ordinal()] - result) > 0.0000001) {
+					throw new RuntimeException("wrong result!\nexpected: " + result + "\nactual  : "
+							+ results[syncMode.ordinal()] + "\nsyncMode: " + syncMode
+							+ ", input size: " + size);
+				}
 			}
 			System.out.print('.');
 		}
+
+		// print averaged execution times
 		System.out.println();
 		for (var syncMode: SyncMode.values()) {
 			System.out.println(String.format("%1$7s average: %2$10d",
-					syncMode , totalTimes[syncMode.ordinal()] / numberOfRuns));
+					syncMode , totalExecutionTimes[syncMode.ordinal()] / numberOfRuns));
 		}
 		System.out.println(String.format("%1$7s average: %2$10d",
-				"CPU" , totalTimes[SyncMode.values().length] / numberOfRuns));
+				"CPU" , totalExecutionTimes[SyncMode.values().length] / numberOfRuns));
 		System.out.println();
 	}
 
-	static void measureExecutionTime(double[] input, SyncMode syncMode, long[] totalTimes) {
+	static void measureExecutionTime(
+			double[] input, SyncMode syncMode, double[] results, long[] totalTimes) {
 		var start = System.nanoTime();
-		var result = ParallelReductionKernel.calculateSum(input, syncMode);
-		var elapsed = System.nanoTime() - start;
-		totalTimes[syncMode.ordinal()] += elapsed;
-		if (log.isLoggable(Level.FINE)) {
-			log.fine(String.format("%1$7s: %2$10d,  result: %3$20.12f", syncMode, elapsed, result));
-		}
+		results[syncMode.ordinal()] = ParallelReductionKernel.calculateSum(input, syncMode);
+		totalTimes[syncMode.ordinal()] += (System.nanoTime() - start);
 	}
 
 	static final Random random = new Random();
-	static final Logger log = Logger.getLogger(ParallelReductionKernel.class.getName());
 }
