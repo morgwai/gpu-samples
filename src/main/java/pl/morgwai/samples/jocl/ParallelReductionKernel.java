@@ -269,7 +269,6 @@ public class ParallelReductionKernel implements AutoCloseable {
 		measureTimes(512*1024, numberOfRuns);
 		measureTimes(1024*1024, numberOfRuns);
 		measureTimes(2*1024*1024, numberOfRuns);
-		measureTimes(3*1024*1024, numberOfRuns);
 		measureTimes(4*1024*1024 - 4096, numberOfRuns);
 		measureTimes(4*1024*1024, numberOfRuns);
 		measureTimes(8*1024*1024, numberOfRuns);
