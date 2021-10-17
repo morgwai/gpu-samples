@@ -1,0 +1,22 @@
+// Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
+plugins {
+	id 'application'
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_11
+	targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+	mavenCentral() 
+}
+
+dependencies {
+	implementation 'com.aparapi:aparapi:3.0.0'
+	implementation 'org.jocl:jocl:2.0.4'
+}
+
+application {
+	mainClass = 'pl.morgwai.samples.jocl.ParallelReductionKernel'
+}
