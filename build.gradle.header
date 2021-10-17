@@ -9,14 +9,10 @@ java {
 }
 
 repositories {
-	mavenCentral() 
-}
-
-dependencies {
-	implementation 'com.aparapi:aparapi:3.0.0'
-	implementation 'org.jocl:jocl:2.0.4'
+	mavenCentral()
 }
 
 application {
 	mainClass = 'pl.morgwai.samples.jocl.ParallelReductionKernel'
 }
+
