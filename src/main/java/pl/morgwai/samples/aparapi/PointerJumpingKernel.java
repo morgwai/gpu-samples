@@ -115,7 +115,7 @@ public class PointerJumpingKernel extends Kernel implements AutoCloseable {
 		int i = getLocalId();
 		int globalIndex = getGlobalId();
 		int groupSize = getLocalSize();
-		int acivityIndicator = i;// Divided by 2 at each step of the main loop until odd.
+		int activityIndicator = i;// Divided by 2 at each step of the main loop until odd.
 				// When odd, the given processing element stays idle (just checks-in at the barrier)
 
 		// copy group's slice into local memory and initialize next pointers
@@ -130,10 +130,10 @@ public class PointerJumpingKernel extends Kernel implements AutoCloseable {
 
 		// main pointer-jumping loop
 		while (next[0] < groupSize) { // run until the whole group is accumulated at index 0
-			if ( (acivityIndicator & 1) == 0 && next[i] < groupSize) {
+			if ( (activityIndicator & 1) == 0 && next[i] < groupSize) {
 				accumulateValue(next[i], i);
 				next[i] = next[next[i]];
-				acivityIndicator >>= 1;
+				activityIndicator >>= 1;
 			}
 			localBarrier();
 		}
@@ -172,14 +172,12 @@ public class PointerJumpingKernel extends Kernel implements AutoCloseable {
 		for (int i = 0; i < size; i++) {
 			result += input[i];
 		}
-		System.out.println(String.format(
-				"cpu: %1$15d,  result: %2$20.12f", System.nanoTime() - start, result));
+		System.out.printf("cpu: %1$15d,  result: %2$20.12f%n", System.nanoTime() - start, result);
 
 		start = System.nanoTime();
 		result = PointerJumpingKernel.calculateSum(input);
 		var stop = System.nanoTime() - start;
-		System.out.println(String.format(
-				"gpu: %1$15d,  result: %2$20.12f\n", stop, result));
+		System.out.printf("gpu: %1$15d,  result: %2$20.12f\n%n", stop, result);
 		return stop;
 	}
 

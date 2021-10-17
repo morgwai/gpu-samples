@@ -78,7 +78,7 @@ public class ParallelReductionKernel extends Kernel implements AutoCloseable {
 	 * rounded up to the nearest power of 2)<br/>
 	 * else {@code groupSize = maxGroupSize} and the last group gets rounded up to the full
 	 * {@code maxGroupSize}.<br/>
-	 * Either way, kernel code has safeguards to ignore elements beyond {@code input.lenght}.</p>
+	 * Either way, kernel code has safeguards to ignore elements beyond {@code input.length}.</p>
 	 * @return value reduced from the whole input.
 	 */
 	protected double reduceArray(double[] input) {
@@ -161,14 +161,12 @@ public class ParallelReductionKernel extends Kernel implements AutoCloseable {
 		for (int i = 0; i < size; i++) {
 			result += input[i];
 		}
-		System.out.println(String.format(
-				"cpu: %1$15d,  result: %2$20.12f", System.nanoTime() - start, result));
+		System.out.printf("cpu: %1$15d,  result: %2$20.12f%n", System.nanoTime() - start, result);
 
 		start = System.nanoTime();
 		result = ParallelReductionKernel.calculateSum(input);
 		var stop = System.nanoTime() - start;
-		System.out.println(String.format(
-				"gpu: %1$15d,  result: %2$20.12f\n", stop, result));
+		System.out.printf("gpu: %1$15d,  result: %2$20.12f\n%n", stop, result);
 		return stop;
 	}
 

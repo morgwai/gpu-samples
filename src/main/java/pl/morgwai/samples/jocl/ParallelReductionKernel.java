@@ -32,7 +32,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 
 
-	public static enum SyncMode {
+	public enum SyncMode {
 
 		/**
 		 * Use local barriers to sync between threads. Uses maximum size work-groups.
@@ -41,13 +41,13 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 		/**
 		 * Use SIMD synchronous execution combined with annotating memory regions being written as
-		 * volatile. Limits max work-group size to SIMD width.
+		 * volatile. Limits max work-group size to {@link #getSimdWidth() SIMD width}.
 		 */
 		SIMD,
 
 		/**
 		 * Use local barriers and maximum size work-groups first, later when the number of active
-		 * threads goes down to SIMD width, stop using barriers but switch to accumulating function
+		 * threads goes down to SIMD width, stop using barriers and switch to accumulating function
 		 * that marks memory as volatile.
 		 */
 		HYBRID
@@ -119,9 +119,10 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 
 	/**
-	 * Dispatches to GPU {@link #reduceOnGpu(int, int) parallel reduction} of distinct slices of
-	 * {@code input} in separate work-groups, after that recursively reduces array of results from
-	 * all work-groups. Recursion stops when everything is accumulated into a single value.
+	 * Dispatches to GPU {@link #reduceOnGpu(cl_mem, int, int, int) parallel reduction} of distinct
+	 * slices of {@code input} in separate work-groups, after that recursively reduces array of
+	 * results from all work-groups. Recursion stops when everything is accumulated into a single
+	 * value.
 	 * <p>
 	 * Takes ownership of {@code input}.</p>
 	 * <p>
@@ -130,7 +131,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 	 * rounded up to the nearest power of 2)<br/>
 	 * else {@code groupSize = maxGroupSize} and the last group gets rounded up to the full
 	 * {@code maxGroupSize}.<br/>
-	 * Either way, kernel code has safeguards to ignore elements beyond {@code input.lenght}.</p>
+	 * Either way, kernel code has safeguards to ignore elements beyond {@code input.length}.</p>
 	 * @return value reduced from the whole input.
 	 */
 	double reduceRecursively(cl_mem input, int inputLength) {
@@ -211,18 +212,18 @@ public class ParallelReductionKernel implements AutoCloseable {
 		final long deviceType = CL_DEVICE_TYPE_GPU;
 		final int deviceIndex = 0;
 		CL.setExceptionsEnabled(true);
-		int numPlatformsArray[] = new int[1];
+		int[] numPlatformsArray = new int[1];
 		clGetPlatformIDs(0, null, numPlatformsArray);
 		int numPlatforms = numPlatformsArray[0];
-		cl_platform_id platforms[] = new cl_platform_id[numPlatforms];
+		cl_platform_id[] platforms = new cl_platform_id[numPlatforms];
 		clGetPlatformIDs(platforms.length, platforms, null);
 		cl_platform_id platform = platforms[platformIndex];
 		cl_context_properties contextProperties = new cl_context_properties();
 		contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
-		int numDevicesArray[] = new int[1];
+		int[] numDevicesArray = new int[1];
 		clGetDeviceIDs(platform, deviceType, 0, null, numDevicesArray);
 		int numDevices = numDevicesArray[0];
-		cl_device_id devices[] = new cl_device_id[numDevices];
+		cl_device_id[] devices = new cl_device_id[numDevices];
 		clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
 		cl_device_id device = devices[deviceIndex];
 		ctx = clCreateContext(contextProperties, 1, new cl_device_id[] { device }, null, null,null);
@@ -277,7 +278,8 @@ public class ParallelReductionKernel implements AutoCloseable {
 	}
 
 	/**
-	 * Runs all 3 {@link SyncMode}s and CPU reduction on random data and outputs evaluation times.
+	 * Runs all 3 {@link SyncMode}s and CPU reduction {@code numberOfRuns} times on random data of
+	 * size {@code size} and outputs evaluation times.
 	 */
 	public static void measureTimes(int size, int numberOfRuns) {
 		if (size % (1024*1024) != 0) {
@@ -320,14 +322,18 @@ public class ParallelReductionKernel implements AutoCloseable {
 		// print averaged execution times
 		System.out.println();
 		for (var syncMode: SyncMode.values()) {
-			System.out.println(String.format("%1$7s average: %2$10d",
-					syncMode , totalExecutionTimes[syncMode.ordinal()] / numberOfRuns));
+			System.out.printf("%1$7s average: %2$10d%n",
+					syncMode , totalExecutionTimes[syncMode.ordinal()] / numberOfRuns);
 		}
-		System.out.println(String.format("%1$7s average: %2$10d",
-				"CPU" , totalExecutionTimes[SyncMode.values().length] / numberOfRuns));
+		System.out.printf("%1$7s average: %2$10d%n",
+				"CPU" , totalExecutionTimes[SyncMode.values().length] / numberOfRuns);
 		System.out.println();
 	}
 
+	/**
+	 * Runs reduction with {@code syncMode} a single time. Stores evaluation time it into
+	 * {@code totalTimes} and result into {@code results} at index {@code syncMode.ordinal()}.
+	 */
 	static void measureExecutionTime(
 			double[] input, SyncMode syncMode, double[] results, long[] totalTimes) {
 		var start = System.nanoTime();
