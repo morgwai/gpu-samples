@@ -8,7 +8,7 @@ Parallel reduction and [pointer jumping](https://en.wikipedia.org/wiki/Pointer_j
 First, make sure that you have an openCL driver for your GPU installed: [Nvidia](https://developer.nvidia.com/cuda-downloads), [AMD Linux](https://www.amd.com/en/support/kb/release-notes/rn-amdgpu-unified-linux-21-30) (AMD on windows should be available by default, hopefully).
 
 ```bash
-mvn clean package
+./mvnw package
 java -jar target/pointer-jumping-gpu-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 This will run parallel reduction kernels using 3 different approaches to synchronization on
