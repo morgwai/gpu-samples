@@ -114,7 +114,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 	double reduceArray(double[] input) {
 		var inputClBuffer = clCreateBuffer(
 				ctx, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS,
-				input.length * Sizeof.cl_double, Pointer.to(input), null);
+			(long) input.length * Sizeof.cl_double, Pointer.to(input), null);
 		return reduceRecursively(inputClBuffer, input.length);
 	}
 
@@ -178,17 +178,18 @@ public class ParallelReductionKernel implements AutoCloseable {
 		var hostAccessMode = CL_MEM_HOST_NO_ACCESS;
 		if (numberOfGroups == 1) hostAccessMode = CL_MEM_HOST_READ_ONLY;
 		var results = clCreateBuffer(ctx, CL_MEM_READ_WRITE | hostAccessMode,
-				numberOfGroups * Sizeof.cl_double, null, null);
+			(long) numberOfGroups * Sizeof.cl_double, null, null);
 
 		try {
 			// set args and call kernel
 			clSetKernelArg(kernel, 0/*input*/, Sizeof.cl_mem, Pointer.to(input));
 			clSetKernelArg(kernel, 1/*inputLength*/, Sizeof.cl_int,
 					Pointer.to(new int[] {inputLength}));
-			clSetKernelArg(kernel, 2/*localSlice*/, Sizeof.cl_double * groupSize, null);
+			clSetKernelArg(kernel, 2/*localSlice*/, (long) Sizeof.cl_double * groupSize, null);
 			clSetKernelArg(kernel, 3/*results*/, Sizeof.cl_mem, Pointer.to(results));
-			clEnqueueNDRangeKernel(queue, kernel, 1, null, new long[] {numberOfGroups*groupSize},
-					new long[] {groupSize}, 0, null,null);
+			clEnqueueNDRangeKernel(queue, kernel, 1, null,
+					new long[] {(long) numberOfGroups * groupSize}, new long[] {groupSize},
+					0, null,null);
 			return results;
 		} catch (Throwable t) {
 			clReleaseMemObject(results);
@@ -239,8 +240,8 @@ public class ParallelReductionKernel implements AutoCloseable {
 		clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, Sizeof.cl_uint,
 				Pointer.to(dimensionsBuffer), null);
 		long[] maxSizes = new long[dimensionsBuffer[0]];
-		clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, Sizeof.size_t * dimensionsBuffer[0],
-				Pointer.to(maxSizes), null);
+		clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES,
+				(long) Sizeof.size_t * dimensionsBuffer[0], Pointer.to(maxSizes), null);
 		maxDimensionSize = (int) maxSizes[0];
 
 		// get device SIMD width: jocl does not have binding for clGetKernelSubGroupInfo(...)
