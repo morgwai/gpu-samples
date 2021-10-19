@@ -77,6 +77,8 @@ public class ParallelReductionKernel implements AutoCloseable {
 	static int simdWidth;
 	public static int getSimdWidth() { return simdWidth; }
 
+	static volatile boolean initialized;
+
 	SyncMode syncMode;
 	cl_kernel kernel;
 	int maxGroupSize;
@@ -84,7 +86,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 
 
 	ParallelReductionKernel(SyncMode syncMode) {
-		if (simdWidth == 0) init();
+		if ( ! initialized) init();
 		this.syncMode = syncMode;
 		String kernelName;
 		switch (syncMode) {
@@ -200,7 +202,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 	 * Voodoo initiation. Each time this function is called a puppy dies, so mind yourself ;-]
 	 */
 	static synchronized void init() {
-		if (program != null) return;
+		if (initialized) return;
 		String programSource;
 		try {
 			programSource = new String(
@@ -258,6 +260,7 @@ public class ParallelReductionKernel implements AutoCloseable {
 		clReleaseMemObject(simdWidthClBuffer);
 		clReleaseKernel(simdWidthKernel);
 		simdWidth = simdWidthBuffer[0];
+		initialized = true;
 	}
 
 
